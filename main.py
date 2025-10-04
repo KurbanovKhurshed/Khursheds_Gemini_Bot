@@ -179,6 +179,52 @@ def handle_message(message):
         bot.reply_to(message, "Произошла ошибка при обращении к ИИ Gemini. Пожалуйста, попробуйте еще раз.")
 
 
-# --- 4. Запуск бота ---
-print("Khurshed's G-Bot (Gemini) запущен и работает...")
-bot.polling(none_stop=True)
+# --- 4. Настройка Webhook для Render ---
+import os
+from flask import Flask, request 
+import telebot
+
+# Создаем приложение Flask (если не создали раньше)
+# ВАЖНО: Убедитесь, что 'bot' (экземпляр TeleBot) создан ранее в коде.
+server = Flask(__name__) 
+
+@server.route("/" + TELEGRAM_TOKEN, methods=["POST"])
+def get_message():
+    """Главная функция Webhook, принимает сообщения от Telegram или пинги."""
+    if request.headers.get("content-type") == "application/json":
+        # Это сообщение от Telegram
+        json_string = request.get_data().decode("utf-8")
+        update = telebot.types.Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return "!", 200 # <-- Отвечаем, что все ОК
+    else:
+        # Это может быть "ПИНГ" или другой запрос.
+        # Просто отвечаем 200 (OK), чтобы сервер не засыпал.
+        return "Ping received!", 200 
+
+def set_webhook_url():
+    """Устанавливает URL Webhook в Telegram API."""
+    # Получаем публичный URL от Render
+    WEBHOOK_URL_BASE = os.environ.get("WEBHOOK_URL_BASE")
+    WEBHOOK_URL_PATH = "/" + TELEGRAM_TOKEN
+    
+    # 1. Сначала удаляем старый Webhook (если был)
+    bot.remove_webhook()
+    
+    # 2. Затем устанавливаем новый
+    bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH)
+    print("Webhook установлен:", WEBHOOK_URL_BASE + WEBHOOK_URL_PATH)
+
+
+# --- 5. Запуск сервера ---
+if __name__ == "__main__":
+    # Убедитесь, что переменная среды PORT установлена Render (по умолчанию 5000)
+    # Если вы еще не меняли токены, то сделайте это сейчас!
+    
+    # 1. Устанавливаем Webhook
+    set_webhook_url() 
+    
+    # 2. Запускаем Flask-сервер на порту Render
+    # Это главная команда, которая держит сервер активным.
+    print(f"Khurshed's G-Bot (Gemini) запущен и работает через Webhook...")
+    server.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
