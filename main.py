@@ -1,9 +1,11 @@
-import telebot
+import os                           # 1. Встроенные модули (os, re)
+import re                           # 
+
+import telebot                      # 2. Внешние модули (telebot)
 from google import genai
 from google.genai import types
-import re 
 from telebot.apihelper import ApiTelegramException
-import os # <-- ДОБАВЬТЕ ЭТУ СТРОКУ
+from flask import Flask, request    # 3. Модули для Webhook
 
 # --- 1. Конфигурация и Токены ---
 # Читаем ключи из переменных окружения Render
@@ -228,3 +230,4 @@ if __name__ == "__main__":
     # Это главная команда, которая держит сервер активным.
     print(f"Khurshed's G-Bot (Gemini) запущен и работает через Webhook...")
     server.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
